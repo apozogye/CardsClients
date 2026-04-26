@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: poc_postgres
+    environment:
+      POSTGRES_DB: cardsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: poc_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  sftp:
+    image: atmoz/sftp:latest
+    container_name: poc_sftp
+    ports:
+      - "2222:22"
+    volumes:
+      - ./data/cardsclients.csv:/home/sftpuser/upload/cardsclients.csv
+    command: sftpuser:sftppass:1001
