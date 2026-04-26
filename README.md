@@ -1,6 +1,46 @@
-Autor:  Alex Giovanny Pozo Pachar
-Fecha: Abril 24 del 2026
+# Proyecto Cards Clients - Carga de Datos con Docker, SFTP, RabbitMQ y PostgreSQL
 
+**Autor:** Alex Giovanny Pozo Pachar  
+**Fecha:** Abril 24 de 2026
+
+---
+
+## Descripción del proyecto
+
+Este proyecto implementa un flujo de carga de datos desde un archivo CSV hacia una base de datos PostgreSQL, utilizando una arquitectura basada en servicios Docker.
+
+El archivo `cardsclients.csv` se encuentra alojado en un servicio SFTP simulado mediante Docker. Posteriormente, un proceso productor lee el archivo desde el SFTP y envía cada registro a una cola de RabbitMQ. Finalmente, un proceso consumidor lee los mensajes de RabbitMQ, valida la información y registra los datos válidos en PostgreSQL.
+
+---
+
+## Arquitectura del flujo
+
+```text
+cardsclients.csv
+      |
+      v
+Servicio SFTP Docker
+      |
+      v
+producer.py
+      |
+      v
+RabbitMQ
+      |
+      v
+consumer.py
+      |
+      v
+PostgreSQL
+
+Requisitos previos
+
+Antes de ejecutar el proyecto, asegúrese de tener instalado:
+
+Docker
+Docker Compose
+Python 3
+pip
 
 Pasos para la ejecucion del proyecto
 
@@ -27,18 +67,31 @@ select count(*) from cards_clients;
 \q salir
 
 
-Paso 4 En una terminal ejecutamos el proceso del productor que es el que carga el CSV desde la imagen SFTP simulada y lo encola en el RabbitMQ
-
+Paso 4 En una terminal ejecutamos el proceso del productor
 python producer.py
 
-Paso 5 En una terminal ejecutamos el proceso del consumidor el mismo procesa los mensajes de Rabbitmq 
-       realiza las validaciones correspondientes los que cumplen la condicion se graban en la BD de postgres 
-       Cada vez que vacia la cola se genera un log con un resumen final indicando que paso con cadaregistro procesado
+El productor realiza las siguientes acciones:
+Se conecta al servicio SFTP.
+Lee el archivo cardsclients.csv.
+Convierte cada registro del archivo en un mensaje JSON.
+Envía los mensajes a la cola cardsclients_queue de RabbitMQ.
 
-python consumer.py       
 
+Paso 5 En una terminal ejecutamos el proceso del consumidor
+python consumer.py
 
-Para Hacer seguimiento directo en RabbitMQ
-http://localhost:15672
-usuario: guest
-clave: guest
+El consumidor realiza las siguientes acciones:
+
+Lee los mensajes desde RabbitMQ.
+Valida la información de cada registro.
+Inserta los registros válidos en PostgreSQL.
+Genera un log de procesamiento por cada carga completa de mensajes.
+Continúa activo esperando nuevos mensajes en la cola.
+Cada vez que la cola queda vacía, se genera un archivo de log en la carpeta: logs
+El nombre del archivo incluye fecha, hora y microsegundos para evitar sobrescrituras en los logs
+
+Monitoreo de RabbitMQ
+RabbitMQ cuenta con una consola web disponible en:  http://localhost:15672
+Credenciales de acceso:
+Usuario	Clave
+guest	guest
