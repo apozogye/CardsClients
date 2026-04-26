@@ -1,0 +1,44 @@
+Autor:  Alex Giovanny Pozo Pachar
+Fecha: Abril 24 del 2026
+
+
+Pasos para la ejecucion del proyecto
+
+Paso 1  ejecutamos el siguiente comando para Levantar 1 contenedor con 3 imagenes Docker 
+    BD poc_postgres  
+    RabbitMQ poc_rabbitMQ
+    SFTP poc_sftp
+
+docker compose down -v  (Por si me salio mal a la primera stop y remover imagenes)
+docker-compose up -d    (Crear contenedor con Imagenes)
+
+--
+docker ps   (Listar Imagenes)
+
+Paso 2  Instalar dependencias segun archivo Requirements.txt
+pip install -r requirements.txt
+
+Paso 3  en Powershell Creamos la tabla en Postgres cards_clients
+
+Get-Content schema.sql | docker exec -i poc_postgres psql -U postgres -d cardsdb
+
+docker exec -it poc_postgres psql -U postgres -d cardsdb
+select count(*) from cards_clients;
+\q salir
+
+
+Paso 4 En una terminal ejecutamos el proceso del productor que es el que carga el CSV desde la imagen SFTP simulada y lo encola en el RabbitMQ
+
+python producer.py
+
+Paso 5 En una terminal ejecutamos el proceso del consumidor el mismo procesa los mensajes de Rabbitmq 
+       realiza las validaciones correspondientes los que cumplen la condicion se graban en la BD de postgres 
+       Cada vez que vacia la cola se genera un log con un resumen final indicando que paso con cadaregistro procesado
+
+python consumer.py       
+
+
+Para Hacer seguimiento directo en RabbitMQ
+http://localhost:15672
+usuario: guest
+clave: guest
